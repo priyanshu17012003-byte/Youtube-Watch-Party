@@ -1,0 +1,9 @@
+http://localhost:5173 : The term 'http://localhost:5173' is not recognized as the name of a cmdlet, function, script 
+file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct 
+and try again.
+At line:1 char:36
++ $env:PORT=4175; $env:CLIENT_ORIGIN=http://localhost:5173; npm.cmd sta ...
++                                    ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (http://localhost:5173:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 

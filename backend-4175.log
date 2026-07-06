@@ -1,0 +1,5 @@
+
+> watch-party-backend@1.0.0 start
+> node index.js
+
+Watch Party server running on http://localhost:4175
