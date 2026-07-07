@@ -10,6 +10,29 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 4000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
+const allowedOrigins = [
+  CLIENT_ORIGIN,
+  'https://youtube-watch-party-livid.vercel.app'
+].filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  return (
+    !origin ||
+    allowedOrigins.includes(origin) ||
+    origin === 'http://localhost:5173' ||
+    origin === 'http://localhost:3000' ||
+    /^https:\/\/youtube-watch-party-[a-z0-9-]+\.vercel\.app$/.test(origin)
+  );
+}
+
+function corsOrigin(origin, callback) {
+  if (isAllowedOrigin(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+}
+
 const roles = {
   HOST: 'Host',
   MODERATOR: 'Moderator',
@@ -149,7 +172,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
+    origin: corsOrigin,
     methods: ['GET', 'POST']
   }
 });
@@ -157,13 +180,19 @@ const roomStore = new RoomStore();
 
 app.use(express.json());
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', CLIENT_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Vary', 'Origin');
+  const origin = req.headers.origin;
+
+  if (isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || CLIENT_ORIGIN);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
+  }
 
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+    return isAllowedOrigin(origin)
+      ? res.sendStatus(204)
+      : res.status(403).send('Not allowed by CORS');
   }
 
   next();
