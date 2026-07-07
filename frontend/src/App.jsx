@@ -13,7 +13,8 @@ const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
 export default function App() {
   const [socket, setSocket] = useState(null);
-  const [username, setUsername] = useState('');
+  const [createUsername, setCreateUsername] = useState('');
+  const [joinUsername, setJoinUsername] = useState('');
   const [roomCode, setRoomCode] = useState(new URLSearchParams(location.search).get('room') || '');
   const [activeRoom, setActiveRoom] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
@@ -114,24 +115,25 @@ export default function App() {
   async function createRoom(event) {
     event.preventDefault();
     setNotice('');
+    const nameToUse = createUsername || 'Host';
     const response = await fetch(`${serverUrl}/api/rooms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username || 'Host' })
+      body: JSON.stringify({ username: nameToUse })
     });
     const data = await response.json();
     setRoomCode(data.roomId);
-    joinRoom(data.roomId);
+    joinRoom(data.roomId, nameToUse);
   }
 
   function joinExistingRoom(event) {
     event.preventDefault();
-    joinRoom(roomCode);
+    joinRoom(roomCode, joinUsername || 'Guest');
   }
 
-  function joinRoom(roomId) {
+  function joinRoom(roomId, name) {
     if (!socket || !roomId.trim()) return;
-    socket.emit('join_room', { roomId: roomId.trim(), username: username || 'Guest' }, (response) => {
+    socket.emit('join_room', { roomId: roomId.trim(), username: name || 'Guest' }, (response) => {
       if (!response.ok) {
         setNotice(response.message || 'Could not join that room.');
         return;
@@ -221,7 +223,11 @@ export default function App() {
           <form onSubmit={createRoom} className="panel">
             <Crown aria-hidden="true" />
             <h2>Create room</h2>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Your name" />
+            <input
+              value={createUsername}
+              onChange={(event) => setCreateUsername(event.target.value)}
+              placeholder="Your name"
+            />
             <button type="submit">
               <Video size={18} /> Start party
             </button>
@@ -230,7 +236,11 @@ export default function App() {
           <form onSubmit={joinExistingRoom} className="panel">
             <LogIn aria-hidden="true" />
             <h2>Join room</h2>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Your name" />
+            <input
+              value={joinUsername}
+              onChange={(event) => setJoinUsername(event.target.value)}
+              placeholder="Your name"
+            />
             <input value={roomCode} onChange={(event) => setRoomCode(event.target.value)} placeholder="Room code" />
             <button type="submit">
               <Users size={18} /> Join
